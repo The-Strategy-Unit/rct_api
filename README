@@ -1,0 +1,6 @@
+Basic Flask API for sending emails to pairs of users.
+
+Companion repository: rct_streamlit which provides a frontend for users to 
+upload their files and interact with the API.
+
+You will need to set MAIL_USERNAME and MAIL_PASSWORD as environment variables.
