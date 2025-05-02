@@ -40,8 +40,8 @@ def send_emails():
         str: Number of emails sent
     """
     data = request.get_json()
-    if data['key'] == os.environ.get("API_KEY"):
-        df = pd.read_json(data['data'], orient="records")
+    if data["key"] == os.environ.get("API_KEY"):
+        df = pd.read_json(data["data"], orient="records")
         with mail.connect() as conn:
             count = 0
             for line in df.index:
@@ -53,7 +53,7 @@ def send_emails():
                 name_2 = df.loc[line, "name_2"]
                 msg = Message(
                     subject="Your Randomized Coffee Trial pairing",
-                    recipients=[email_1, email_2], 
+                    recipients=[email_1, email_2],
                     sender=os.environ.get("MAIL_USERNAME"),
                 )
                 msg.body = f"""
@@ -61,11 +61,14 @@ def send_emails():
                             Trial buddies for this month! Please arrange a 30 minute 
                             conversation at a mutually convenient time. We hope you 
                             enjoy it!
+                            \n \n
+                            If you have any questions, please contact YiWen Hon or a member of the Staff Development and Wellbeing team.
                             """
                 conn.send(msg)
             return f"{count} messages sent!"
     else:
         return "Invalid API key"
+
 
 if __name__ == "__main__":
     app.run()
