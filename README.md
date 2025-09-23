@@ -1,0 +1,11 @@
+## RCT Emailer API
+
+Basic Flask API for sending emails to pairs of users.
+
+Companion repository: [rct_streamlit](https://github.com/The-Strategy-Unit/rct_streamlit/) which provides a frontend for users to
+upload their files and interact with the API.
+
+You will need to set as environment variables:
+
+- MAIL_USERNAME
+- MAIL_PASSWORD

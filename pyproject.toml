@@ -1,0 +1,12 @@
+[project]
+name = "rct-api"
+version = "0.1.0"
+description = "Simple emailer for Randomized Coffee Trials at the SU"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "flask>=3.1.2",
+    "flask-mail>=0.10.0",
+    "pandas>=2.3.2",
+]
