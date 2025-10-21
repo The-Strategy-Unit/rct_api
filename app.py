@@ -32,9 +32,10 @@ def hello_world():
 @app.post("/send_emails")
 def send_emails():
     """
-    Basic POST endpoint for API. Accepts JSON with keys "key", "email_text" and
-    "data", where "data" is a DataFrame containing the names and email addresses
-    of recipients. Columns must be "email_1", "email_2", "name_1" and "name_2".
+    Basic POST endpoint for API. Accepts JSON with keys "key", "email_subject",
+    "email_text" and "data", where "data" is a DataFrame containing the names
+    and email addresses of recipients. Columns in DataFrame must be "email_1", "email_2",
+    "name_1" and "name_2".
 
     Returns:
         str: Number of emails sent
