@@ -32,9 +32,10 @@ def hello_world():
 @app.post("/send_emails")
 def send_emails():
     """
-    Basic POST endpoint for API. Accepts JSON of a DataFrame containing the names
-    and email addresses of recipients. Columns must be "email_1", "email_2",
-    "name_1" and "name_2". Must include valid API key as "key" in query string.
+    Basic POST endpoint for API. Accepts JSON with keys "key", "email_subject",
+    "email_text" and "data", where "data" is a DataFrame containing the names
+    and email addresses of recipients. Columns in DataFrame must be "email_1", "email_2",
+    "name_1" and "name_2".
 
     Returns:
         str: Number of emails sent
@@ -52,18 +53,12 @@ def send_emails():
                 name_1 = df.loc[line, "name_1"]
                 name_2 = df.loc[line, "name_2"]
                 msg = Message(
-                    subject="Your Randomized Coffee Trial pairing",
+                    subject=data["email_subject"],
                     recipients=[email_1, email_2],
                     sender=os.environ.get("MAIL_USERNAME"),
                 )
-                msg.body = f"""
-                            Dear {name_1} and {name_2}, you are Randomized Coffee 
-                            Trial buddies for this month! Please arrange a 30 minute 
-                            conversation at a mutually convenient time. We hope you 
-                            enjoy it!
-                            \n \n
-                            If you have any questions, please contact YiWen Hon or a member of the Staff Development and Wellbeing team.
-                            """
+                salutation = f"Dear {name_1} and {name_2}, \n \n"
+                msg.body = salutation + data["email_text"]
                 conn.send(msg)
             return f"{count} messages sent!"
     else:

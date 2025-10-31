@@ -1,4 +1,4 @@
-## RCT Emailer API
+# RCT Emailer API
 
 Basic Flask API for sending emails to pairs of users.
 
