@@ -57,8 +57,7 @@ def send_emails():
                     recipients=[email_1, email_2],
                     sender=os.environ.get("MAIL_USERNAME"),
                 )
-                salutation = f"Dear {name_1} and {name_2}, \n \n"
-                msg.body = salutation + data["email_text"]
+                msg.html = f"<p>Dear {name_1} and {name_2},</p>" + data["email_text"]
                 conn.send(msg)
             return f"{count} messages sent!"
     else:
