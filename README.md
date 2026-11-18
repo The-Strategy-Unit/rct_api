@@ -9,10 +9,10 @@ Configure these environment variables for the API:
 
 - `API_KEY`
 - `MAILBOX`
-- `CONNECT_OAUTH_INTEGRATION_GUID`
+- `INTEGRATION_GUID`
 
 `MAILBOX` is the Microsoft 365 mailbox used as both the SMTP OAuth
-username and the message sender. `CONNECT_OAUTH_INTEGRATION_GUID` is the
+username and the message sender. `INTEGRATION_GUID` is the
 audience/GUID of the OAuth integration configured in Posit Connect. The API
 must run as content in Posit Connect so the Posit SDK can obtain credentials
 for that integration. Configure the integration and its Microsoft 365 SMTP
