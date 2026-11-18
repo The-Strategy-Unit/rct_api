@@ -1,21 +1,73 @@
-from flask import Flask, request
-from flask_mail import Mail, Message
+import base64
+import os
+import smtplib
+import ssl
+from collections.abc import Iterable
+from email.message import EmailMessage
+from functools import lru_cache
+
 import pandas as pd
 from dotenv import load_dotenv
-import os
-import json
+from flask import Flask, request
+from posit import connect
 
 load_dotenv()
 app = Flask(__name__)
 
-app.config["MAIL_SERVER"] = "smtp.office365.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USE_SSL"] = False
+SMTP_HOST = "smtp.office365.com"
+SMTP_PORT = 587
+CONNECT_OAUTH_INTEGRATION_GUID = os.environ.get("INTEGRATION_GUID")
 
-mail = Mail(app)
+
+@lru_cache(maxsize=1)
+def get_connect_client():
+    return connect.Client()
+
+
+def get_access_token() -> str:
+    if not CONNECT_OAUTH_INTEGRATION_GUID:
+        raise RuntimeError("INTEGRATION_GUID is not configured.")
+
+    credentials = get_connect_client().oauth.get_content_credentials(
+        audience=CONNECT_OAUTH_INTEGRATION_GUID
+    )
+    access_token = credentials.get("access_token")
+    if not access_token:
+        raise RuntimeError("Posit Connect did not return an access token.")
+
+    return access_token
+
+
+def generate_xoauth2_string(username: str, access_token: str) -> str:
+    auth_field = "auth=" + "Bearer " + access_token
+    auth_string = f"user={username}\x01{auth_field}\x01\x01"
+    return base64.b64encode(auth_string.encode()).decode()
+
+
+def send_messages(
+    messages: Iterable[EmailMessage],
+    username: str,
+    access_token: str,
+) -> int:
+    xoauth2 = generate_xoauth2_string(username, access_token)
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+        smtp.ehlo()
+        smtp.starttls(context=ssl.create_default_context())
+        smtp.ehlo()
+
+        response_code, _ = smtp.docmd("AUTH", f"XOAUTH2 {xoauth2}")
+        if response_code != 235:
+            raise RuntimeError(
+                f"SMTP OAuth authentication failed (SMTP code {response_code})."
+            )
+
+        count = 0
+        for message in messages:
+            smtp.send_message(message)
+            count += 1
+
+    return count
 
 
 @app.route("/")
@@ -43,23 +95,32 @@ def send_emails():
     data = request.get_json()
     if data["key"] == os.environ.get("API_KEY"):
         df = pd.read_json(data["data"], orient="records")
-        with mail.connect() as conn:
-            count = 0
+        mailbox = os.environ.get("MAILBOX")
+        if not mailbox:
+            raise RuntimeError("MAILBOX is not configured.")
+
+        def messages():
             for line in df.index:
-                print(line)
-                count += 1
                 email_1 = df.loc[line, "email_1"]
                 email_2 = df.loc[line, "email_2"]
                 name_1 = df.loc[line, "name_1"]
                 name_2 = df.loc[line, "name_2"]
-                msg = Message(
-                    subject=data["email_subject"],
-                    recipients=[email_1, email_2],
-                    sender=os.environ.get("MAIL_USERNAME"),
+                message = EmailMessage()
+                message["Subject"] = data["email_subject"]
+                message["To"] = f"{email_1}, {email_2}"
+                message["From"] = mailbox
+                message.set_content(
+                    f"<p>Dear {name_1} and {name_2},</p>" + data["email_text"],
+                    subtype="html",
                 )
-                msg.html = f"<p>Dear {name_1} and {name_2},</p>" + data["email_text"]
-                conn.send(msg)
-            return f"{count} messages sent!"
+                yield message
+
+        count = send_messages(
+            messages(),
+            username=mailbox,
+            access_token=get_access_token(),
+        )
+        return f"{count} messages sent!"
     else:
         return "Invalid API key"
 
