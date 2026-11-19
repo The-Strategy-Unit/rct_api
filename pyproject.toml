@@ -7,6 +7,6 @@ requires-python = ">=3.12"
 dependencies = [
     "dotenv>=0.9.9",
     "flask>=3.1.2",
-    "flask-mail>=0.10.0",
     "pandas>=2.3.2",
+    "posit-sdk>=0.17.0",
 ]
